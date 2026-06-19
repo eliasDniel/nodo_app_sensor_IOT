@@ -2,14 +2,18 @@ import '../config/centinela_config.dart';
 
 class MetadataPayload {
   MetadataPayload({
-    required this.nodoId,
+    required this.codigoNodo,
+    required this.latitud,
+    required this.longitud,
     required this.timestamp,
     required this.duracion,
     required this.eventoId,
     required this.nivelAudio,
   });
 
-  final String nodoId;
+  final String codigoNodo;
+  final double latitud;
+  final double longitud;
   final int timestamp;
   final int duracion;
   final String eventoId;
@@ -17,7 +21,9 @@ class MetadataPayload {
 
   factory MetadataPayload.fromJson(Map<String, dynamic> json) {
     return MetadataPayload(
-      nodoId: json['nodo_id'] as String,
+      codigoNodo: (json['codigo_nodo'] ?? json['nodo_id']) as String,
+      latitud: (json['latitud'] as num?)?.toDouble() ?? CentinelaConfig.latitud,
+      longitud: (json['longitud'] as num?)?.toDouble() ?? CentinelaConfig.longitud,
       timestamp: json['timestamp'] as int,
       duracion: json['duracion'] as int,
       eventoId: json['evento_id'] as String,
@@ -26,7 +32,9 @@ class MetadataPayload {
   }
 
   Map<String, dynamic> toJson() => {
-        'nodo_id': nodoId,
+        'codigo_nodo': codigoNodo,
+        'latitud': latitud,
+        'longitud': longitud,
         'timestamp': timestamp,
         'duracion': duracion,
         'evento_id': eventoId,
@@ -39,7 +47,9 @@ class MetadataPayload {
     required double nivelAudio,
   }) {
     return MetadataPayload(
-      nodoId: CentinelaConfig.clientId,
+      codigoNodo: CentinelaConfig.codigoNodo,
+      latitud: CentinelaConfig.latitud,
+      longitud: CentinelaConfig.longitud,
       timestamp: timestamp,
       duracion: CentinelaConfig.totalEventSeconds,
       eventoId: eventoId,

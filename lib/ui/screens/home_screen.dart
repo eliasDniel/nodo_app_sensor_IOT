@@ -7,6 +7,7 @@ import '../../models/node_status.dart';
 import '../../providers/centinela_provider.dart';
 import '../widgets/activity_log.dart';
 import '../widgets/status_badge.dart';
+import 'config_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -17,6 +18,14 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('CENTINELA — Nodo Audio'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            key: const Key('btn_settings'),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Configuración',
+            onPressed: () => _goToConfig(context),
+          ),
+        ],
       ),
       body: Consumer<CentinelaProvider>(
         builder: (context, provider, _) {
@@ -37,8 +46,16 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'ID: ${CentinelaConfig.clientId}',
+                          'Código: ${CentinelaConfig.codigoNodo}',
                           style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        Text(
+                          'Ubicación: ${CentinelaConfig.latitud.toStringAsFixed(4)}, ${CentinelaConfig.longitud.toStringAsFixed(4)}',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        Text(
+                          'Broker: ${CentinelaConfig.brokerHost}:${CentinelaConfig.brokerPort}',
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                         ),
                         const Divider(height: 24),
                         StatusBadge(
@@ -82,6 +99,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton.icon(
+                        key: const Key('btn_encender_nodo'),
                         onPressed: provider.nodeStatus == NodeStatus.inactive
                             ? provider.encenderNodo
                             : null,
@@ -92,6 +110,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
+                        key: const Key('btn_apagar_nodo'),
                         onPressed: provider.nodeStatus == NodeStatus.active
                             ? provider.apagarNodo
                             : null,
@@ -122,6 +141,23 @@ class HomeScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _goToConfig(BuildContext context) async {
+    final provider = context.read<CentinelaProvider>();
+    await provider.disconnectAll();
+
+    if (!context.mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (ctx, a1, a2) => const ConfigScreen(),
+        transitionsBuilder: (ctx, anim, a2, child) => FadeTransition(
+          opacity: anim,
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 350),
       ),
     );
   }

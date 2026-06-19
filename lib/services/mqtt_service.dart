@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
-import 'package:typed_data/typed_data.dart' as typed;
 
 import '../config/centinela_config.dart';
 import '../models/connection_status.dart';
@@ -30,7 +29,7 @@ class MqttService {
 
     final client = MqttServerClient.withPort(
       CentinelaConfig.brokerHost,
-      CentinelaConfig.clientId,
+      CentinelaConfig.codigoNodo,
       CentinelaConfig.brokerPort,
     );
     client.logging(on: false);
@@ -43,7 +42,7 @@ class MqttService {
     _client = client;
 
     final connMessage = MqttConnectMessage()
-        .withClientIdentifier(CentinelaConfig.clientId)
+        .withClientIdentifier(CentinelaConfig.codigoNodo)
         .startClean();
 
     client.connectionMessage = connMessage;
@@ -81,6 +80,8 @@ class MqttService {
     onConnectionChanged?.call(status);
   }
 
+  /// Publica audio + metadata en un único topic como JSON unificado.
+  /// El audio WAV se codifica en Base64 dentro del campo "audio_b64".
   Future<bool> publishEvent({
     required Uint8List wavBytes,
     required MetadataPayload meta,
@@ -89,23 +90,20 @@ class MqttService {
 
     for (var attempt = 1; attempt <= CentinelaConfig.mqttRetryAttempts; attempt++) {
       try {
-        final metaBuilder = MqttClientPayloadBuilder();
-        metaBuilder.addString(jsonEncode(meta.toJson()));
+        // Construir payload unificado: metadata + audio en Base64
+        final payload = meta.toJson();
+        payload['audio_b64'] = base64Encode(wavBytes);
+
+        final builder = MqttClientPayloadBuilder();
+        builder.addString(jsonEncode(payload));
+
         _client!.publishMessage(
-          CentinelaConfig.topicMeta,
+          CentinelaConfig.topicEvent,
           MqttQos.atLeastOnce,
-          metaBuilder.payload!,
+          builder.payload!,
         );
 
-        final audioBuffer = typed.Uint8Buffer()..addAll(wavBytes);
-        final audioBuilder = MqttClientPayloadBuilder()..addBuffer(audioBuffer);
-        _client!.publishMessage(
-          CentinelaConfig.topicAudio,
-          MqttQos.atLeastOnce,
-          audioBuilder.payload!,
-        );
-
-        onLog?.call('Publicado evento ${meta.eventoId}');
+        onLog?.call('Publicado evento ${meta.eventoId} → ${CentinelaConfig.topicEvent}');
         return true;
       } catch (e) {
         onLog?.call('Reintento $attempt/${CentinelaConfig.mqttRetryAttempts}: $e');

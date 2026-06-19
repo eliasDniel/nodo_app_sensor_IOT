@@ -47,6 +47,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>CENTINELA necesita acceso al micrófono para detectar eventos sonoros.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CENTINELA necesita tu ubicación para registrar las coordenadas del nodo.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Conexión al broker MQTT local CENTINELA.</string>
 	<key>UIBackgroundModes</key>
